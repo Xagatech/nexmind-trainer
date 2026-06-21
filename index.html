@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#0d1117">
+<meta name="description" content="NEXMIND Trading Trainer — ฝึกคำนวณ Position Sizing, Expectancy และ Drawdown สำหรับเทรด XAUUSD">
+<title>NEXMIND Trainer — ฝึกคำนวณเทรด XAUUSD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117; --bg-soft:#161b22; --bg-card:#1c2230; --bg-card-2:#232a3a;
+  --line:#2d3444; --line-soft:#222937;
+  --ink:#e6edf3; --ink-soft:#a8b3c4; --ink-mute:#6b7686;
+  --gold:#e0a82e; --gold-soft:#3a2f14;
+  --blue:#4493f8; --blue-soft:#0d2847;
+  --green:#3fb950; --green-soft:#0f2818;
+  --amber:#d29922; --amber-soft:#2b2310;
+  --red:#f85149; --red-soft:#2d1416;
+  --purple:#a371f7;
+  --radius:14px; --radius-sm:10px; --radius-lg:20px;
+  --mono:'JetBrains Mono',monospace;
+  --shadow:0 8px 30px rgba(0,0,0,.35);
+  --maxw:760px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Sarabun',sans-serif; background:var(--bg); color:var(--ink);
+  line-height:1.6; min-height:100vh;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(224,168,46,.06), transparent),
+                   radial-gradient(ellipse 60% 50% at 90% 10%, rgba(68,147,248,.05), transparent);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+h1,h2,h3,h4,.k{font-family:'Kanit',sans-serif;font-weight:600;}
+.mono{font-family:var(--mono);}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px;}
+
+/* ===== TOP BAR ===== */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(13,17,23,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line-soft);
+}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:11px 16px;display:flex;align-items:center;gap:12px;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);}
+.logo-mark{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),#b8801f);
+  display:flex;align-items:center;justify-content:center;font-size:19px;color:#1a1205;font-weight:700;
+  font-family:'Kanit',sans-serif;
+}
+.logo-txt b{font-size:15px;font-weight:600;display:block;line-height:1.1;font-family:'Kanit',sans-serif;}
+.logo-txt span{font-size:11px;color:var(--ink-mute);}
+.topbar-stats{margin-left:auto;display:flex;gap:8px;}
+.tstat{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:5px 11px;text-align:center;min-width:52px;}
+.tstat .lbl{font-size:9.5px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.5px;}
+.tstat .val{font-size:16px;font-weight:600;line-height:1.15;font-family:'Kanit',sans-serif;}
+
+/* ===== HERO ===== */
+.hero{padding:38px 0 26px;text-align:center;}
+.hero .eyebrow{
+  display:inline-block;font-family:'Kanit',sans-serif;font-size:12px;letter-spacing:2px;
+  color:var(--gold);text-transform:uppercase;font-weight:500;
+  border:1px solid var(--gold-soft);background:var(--gold-soft);
+  padding:4px 14px;border-radius:999px;margin-bottom:18px;
+}
+.hero h1{font-size:30px;line-height:1.18;font-weight:700;margin-bottom:12px;letter-spacing:-.5px;}
+.hero h1 .grad{
+  background:linear-gradient(120deg,var(--gold),#f0c674);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero p{font-size:15px;color:var(--ink-soft);max-width:480px;margin:0 auto 24px;}
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+/* ===== BUTTONS ===== */
+.btn{
+  font-family:'Kanit',sans-serif;font-weight:500;font-size:15px;
+  padding:12px 24px;border-radius:var(--radius);
+  display:inline-flex;align-items:center;gap:8px;
+  transition:transform .1s,background .15s,border-color .15s,opacity .15s;
+  border:1px solid var(--line);background:var(--bg-card);color:var(--ink);
+}
+.btn:hover{background:var(--bg-card-2);border-color:var(--line);}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(135deg,var(--gold),#c9901f);color:#1a1205;border-color:transparent;font-weight:600;}
+.btn-primary:hover{opacity:.9;background:linear-gradient(135deg,var(--gold),#c9901f);}
+.btn-ghost{background:transparent;}
+.btn-sm{padding:9px 16px;font-size:13.5px;}
+.btn svg{width:18px;height:18px;}
+
+/* ===== TOPIC CHIPS (hero) ===== */
+.chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:30px;}
+.chip{
+  background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;min-width:150px;flex:1;max-width:220px;text-align:left;
+}
+.chip-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px;}
+.chip h3{font-size:14px;font-weight:600;margin-bottom:3px;}
+.chip p{font-size:11.5px;color:var(--ink-mute);line-height:1.45;}
+.ic-blue{background:var(--blue-soft);color:var(--blue);}
+.ic-green{background:var(--green-soft);color:var(--green);}
+.ic-amber{background:var(--amber-soft);color:var(--amber);}
+
+/* ===== VIEWS ===== */
+.view{display:none;animation:fade .35s ease;}
+.view.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== TRAINER ===== */
+.trainer{padding:20px 0 60px;}
+.tr-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.tr-back{font-size:13px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--bg-card);}
+.tr-back:hover{background:var(--bg-card-2);}
+
+/* progress */
+.prog-box{margin-bottom:18px;}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.prog-top .lbl{font-size:13px;color:var(--ink-soft);}
+.prog-top .cnt{font-size:13px;font-weight:500;color:var(--green);font-family:'Kanit',sans-serif;}
+.pips{display:flex;gap:6px;}
+.pip{flex:1;height:7px;border-radius:4px;background:var(--line);transition:background .3s,box-shadow .3s;}
+.pip.on{background:var(--green);box-shadow:0 0 8px rgba(63,185,80,.5);}
+
+/* card */
+.qcard{
+  background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);
+  overflow:hidden;box-shadow:var(--shadow);position:relative;
+}
+.qcard-accent{height:4px;background:var(--blue);transition:background .3s;}
+.qcard-body{padding:22px;}
+@media(max-width:480px){.qcard-body{padding:18px 16px;}}
+.qcard-top{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.badge{
+  font-family:'Kanit',sans-serif;font-size:12px;font-weight:500;padding:5px 13px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.badge svg{width:13px;height:13px;}
+.b-blue{background:var(--blue-soft);color:var(--blue);}
+.b-green{background:var(--green-soft);color:var(--green);}
+.b-amber{background:var(--amber-soft);color:var(--amber);}
+.qnum{margin-left:auto;font-size:12.5px;color:var(--ink-mute);}
+.scenario{font-size:15.5px;line-height:1.7;margin-bottom:16px;}
+.givens{
+  background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius-sm);
+  padding:13px 15px;margin-bottom:18px;font-family:var(--mono);font-size:13px;line-height:2;
+  color:var(--ink);white-space:pre-line;overflow-x:auto;
+}
+.ask-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+.ask-field{flex:1;min-width:160px;}
+.ask-field label{display:block;font-size:14px;color:var(--ink-soft);margin-bottom:8px;}
+.input-grp{display:flex;align-items:center;gap:9px;}
+input[type=text]{
+  width:140px;font-family:var(--mono);font-size:17px;font-weight:500;text-align:center;
+  background:var(--bg);border:1.5px solid var(--line);border-radius:var(--radius-sm);
+  padding:11px 12px;color:var(--ink);transition:border-color .15s,box-shadow .15s;outline:none;
+}
+input[type=text]:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(224,168,46,.15);}
+.unit{font-size:13.5px;color:var(--ink-mute);}
+
+/* feedback */
+.fb{margin-top:16px;border-radius:var(--radius-sm);padding:14px 16px;animation:fbpop .25s ease-out;}
+@keyframes fbpop{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.fb-ok{background:var(--green-soft);border:1px solid rgba(63,185,80,.3);}
+.fb-no{background:var(--red-soft);border:1px solid rgba(248,81,73,.3);}
+.fb-n{background:var(--bg-card-2);border:1px solid var(--line);}
+.fb-title{font-family:'Kanit',sans-serif;font-weight:500;font-size:14.5px;margin-bottom:9px;display:flex;align-items:center;gap:7px;}
+.fb-ok .fb-title{color:var(--green);}
+.fb-no .fb-title{color:var(--red);}
+.fb-title svg{width:17px;height:17px;flex-shrink:0;}
+.steps-lbl{font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;font-weight:500;}
+.steps{font-family:var(--mono);font-size:12.5px;line-height:2;color:var(--ink-soft);overflow-x:auto;}
+.steps .sn{color:var(--ink-mute);margin-right:4px;}
+.bonus{font-size:13px;opacity:.85;font-weight:400;}
+
+.qcard-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center;}
+.hint-txt{font-size:11.5px;color:var(--ink-mute);}
+
+/* ===== STATS VIEW ===== */
+.stats{padding:24px 0 60px;}
+.stats h2{font-size:22px;margin-bottom:4px;}
+.stats .sub{font-size:13.5px;color:var(--ink-mute);margin-bottom:24px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:28px;}
+.stat-card{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+.stat-card .ic{font-size:20px;margin-bottom:10px;display:block;}
+.stat-card .num{font-size:28px;font-weight:600;font-family:'Kanit',sans-serif;line-height:1.1;}
+.stat-card .cap{font-size:12.5px;color:var(--ink-mute);margin-top:3px;}
+.topic-stats h3{font-size:16px;margin-bottom:14px;}
+.tbar{margin-bottom:16px;}
+.tbar-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+.tbar-top .nm{font-weight:500;font-family:'Kanit',sans-serif;}
+.tbar-top .pc{color:var(--ink-mute);}
+.tbar-track{height:9px;background:var(--line);border-radius:5px;overflow:hidden;}
+.tbar-fill{height:100%;border-radius:5px;transition:width .6s ease;}
+.reset-row{margin-top:28px;display:flex;justify-content:center;}
+
+/* ===== FOOTER ===== */
+.footer{border-top:1px solid var(--line-soft);padding:24px 0 30px;text-align:center;}
+.footer p{font-size:12px;color:var(--ink-mute);line-height:1.7;}
+.footer .def{font-family:var(--mono);color:var(--ink-soft);}
+
+/* responsive hero */
+@media(max-width:560px){
+  .hero{padding:28px 0 18px;}
+  .hero h1{font-size:24px;}
+  .hero p{font-size:14px;}
+  .chip{min-width:130px;max-width:none;}
+  .topbar-stats{display:none;}
+  .logo-txt span{display:none;}
+}
+@media(max-width:380px){
+  .hero h1{font-size:21px;}
+  .btn{padding:11px 18px;font-size:14px;}
+}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-in">
+    <a href="#" class="logo" onclick="go('home');return false;">
+      <span class="logo-mark">N</span>
+      <span class="logo-txt"><b>NEXMIND Trainer</b><span>ฝึกคำนวณเทรด XAUUSD</span></span>
+    </a>
+    <div class="topbar-stats">
+      <div class="tstat"><div class="lbl">คะแนน</div><div class="val" id="tb-score">0</div></div>
+      <div class="tstat"><div class="lbl">คอมโบ</div><div class="val" id="tb-combo" style="color:var(--amber)">0×</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HOME VIEW ============ -->
+<section class="view active" id="view-home">
+  <div class="wrap">
+    <div class="hero">
+      <span class="eyebrow">Senior Project · NEXMIND</span>
+      <h1>ฝึกคำนวณเทรดให้<br><span class="grad">ติดมือ</span> ก่อนเขียนบอท</h1>
+      <p>โจทย์สุ่มไม่จำกัด ระดับโหดแบบสถานการณ์จริง ครอบคลุม 3 เรื่องหลักที่เป็นหัวใจของระบบเทรด — เฉลยทีละ step ทุกข้อ</p>
+      <div class="hero-cta">
+        <button class="btn btn-primary" onclick="startTrainer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+          เริ่มฝึกเลย
+        </button>
+        <button class="btn btn-ghost" onclick="go('stats')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>
+          ดูสถิติ
+        </button>
+      </div>
+
+      <div class="chips">
+        <div class="chip">
+          <div class="chip-ic ic-blue">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          </div>
+          <h3>Position Sizing</h3>
+          <p>คำนวณ lot จาก SL · ย้อนหา SL สูงสุด · ปรับ lot ตามความผันผวน</p>
+        </div>
+        <div class="chip">
+          <div class="chip-ic ic-green">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+          </div>
+          <h3>Expectancy</h3>
+          <p>กำไรเฉลี่ยต่อไม้ · breakeven win rate · ย้อนหา win rate ที่ต้องการ</p>
+        </div>
+        <div class="chip">
+          <div class="chip-ic ic-amber">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6 6 4-4 7 7"/><path d="M21 16v-5h-5"/></svg>
+          </div>
+          <h3>Drawdown</h3>
+          <p>การฟื้นตัวไม่สมมาตร · คำนวณ DD% · compound loss หลายวัน</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRAINER VIEW ============ -->
+<section class="view" id="view-trainer">
+  <div class="wrap trainer">
+    <div class="tr-head">
+      <button class="tr-back" onclick="go('home')">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        หน้าแรก
+      </button>
+      <button class="tr-back" onclick="go('stats')" style="margin-left:auto;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>
+        สถิติ
+      </button>
+    </div>
+
+    <div class="prog-box">
+      <div class="prog-top">
+        <span class="lbl">เป้าหมาย: ถูกติดกัน 10 ข้อ (ไม่เปิดเฉลย)</span>
+        <span class="cnt" id="streak-lbl">0 / 10</span>
+      </div>
+      <div class="pips" id="pips"></div>
+    </div>
+
+    <div class="qcard">
+      <div class="qcard-accent" id="accent"></div>
+      <div class="qcard-body">
+        <div class="qcard-top">
+          <span class="badge b-blue" id="badge">
+            <span id="badge-ic"></span><span id="badge-tx">Position Sizing</span>
+          </span>
+          <span class="qnum" id="qnum">ข้อที่ 1</span>
+        </div>
+
+        <p class="scenario" id="scenario"></p>
+        <div class="givens" id="givens"></div>
+
+        <div class="ask-row">
+          <div class="ask-field">
+            <label id="ask"></label>
+            <div class="input-grp">
+              <input type="text" id="answer" inputmode="decimal" placeholder="?" autocomplete="off">
+              <span class="unit" id="unit"></span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="checkAns()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+            เช็ค
+          </button>
+        </div>
+
+        <div id="feedback"></div>
+
+        <div class="qcard-actions">
+          <button class="btn btn-sm btn-ghost" onclick="reveal()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            ดูเฉลย
+          </button>
+          <span class="hint-txt">เปิดเฉลย = คอมโบรีเซ็ต</span>
+          <button class="btn btn-sm" style="margin-left:auto;" onclick="nextQ()">
+            โจทย์ใหม่
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS VIEW ============ -->
+<section class="view" id="view-stats">
+  <div class="wrap stats">
+    <button class="tr-back" onclick="go('home')" style="margin-bottom:20px;">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      หน้าแรก
+    </button>
+    <h2>สถิติการฝึก</h2>
+    <p class="sub">บันทึกอัตโนมัติในเครื่องนี้ · เปิดใหม่ครั้งหน้าก็ยังอยู่</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="ic" style="color:var(--gold)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M9 18l-2 4 5-3 5 3-2-4"/></svg>
+        </span>
+        <div class="num" id="st-total">0</div>
+        <div class="cap">ตอบทั้งหมด</div>
+      </div>
+      <div class="stat-card">
+        <span class="ic" style="color:var(--green)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        </span>
+        <div class="num" id="st-acc">0%</div>
+        <div class="cap">ความแม่นยำ</div>
+      </div>
+      <div class="stat-card">
+        <span class="ic" style="color:var(--amber)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </span>
+        <div class="num" id="st-best">0</div>
+        <div class="cap">สถิติติดสูงสุด</div>
+      </div>
+      <div class="stat-card">
+        <span class="ic" style="color:var(--blue)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </span>
+        <div class="num" id="st-score">0</div>
+        <div class="cap">คะแนนรวม</div>
+      </div>
+    </div>
+
+    <div class="topic-stats">
+      <h3>ความแม่นยำแยกตามเรื่อง</h3>
+      <div class="tbar">
+        <div class="tbar-top"><span class="nm" style="color:var(--blue)">Position Sizing</span><span class="pc" id="tp-ps">—</span></div>
+        <div class="tbar-track"><div class="tbar-fill" id="tf-ps" style="width:0;background:var(--blue)"></div></div>
+      </div>
+      <div class="tbar">
+        <div class="tbar-top"><span class="nm" style="color:var(--green)">Expectancy</span><span class="pc" id="tp-exp">—</span></div>
+        <div class="tbar-track"><div class="tbar-fill" id="tf-exp" style="width:0;background:var(--green)"></div></div>
+      </div>
+      <div class="tbar">
+        <div class="tbar-top"><span class="nm" style="color:var(--amber)">Drawdown</span><span class="pc" id="tp-dd">—</span></div>
+        <div class="tbar-track"><div class="tbar-fill" id="tf-dd" style="width:0;background:var(--amber)"></div></div>
+      </div>
+    </div>
+
+    <div class="reset-row">
+      <button class="btn btn-sm btn-ghost" onclick="resetStats()" style="color:var(--red);border-color:var(--red-soft);">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        ล้างสถิติทั้งหมด
+      </button>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>
+      <span class="def">1 pip = ราคาขยับ 0.1 · pip value = $1 / 1.00 lot</span><br>
+      NEXMIND Trading Trainer · ฝึกเพื่อเตรียมโปรเจคจบ · ตอบเป็นตัวเลขล้วน
+    </p>
+  </div>
+</footer>
+
+<script>
+/* ===================== ICONS (inline svg strings) ===================== */
+var IC={
+  ps:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg>',
+  exp:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>',
+  dd:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6 6 4-4 7 7"/><path d="M21 16v-5h-5"/></svg>',
+  ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>',
+  no:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>'
+};
+var THEME={
+  ps:{badge:'b-blue',accent:'var(--blue)',ic:IC.ps,label:'Position Sizing'},
+  exp:{badge:'b-green',accent:'var(--green)',ic:IC.exp,label:'Expectancy'},
+  dd:{badge:'b-amber',accent:'var(--amber)',ic:IC.dd,label:'Drawdown'}
+};
+
+/* ===================== HELPERS ===================== */
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function round(n,d){var f=Math.pow(10,d);return Math.round(n*f)/f;}
+function $(id){return document.getElementById(id);}
+
+/* ===================== STATE + PERSISTENCE ===================== */
+var KEY='nexmind_trainer_v1';
+var ST={total:0,correct:0,best:0,score:0,byTopic:{ps:[0,0],exp:[0,0],dd:[0,0]}};
+function loadST(){try{var r=localStorage.getItem(KEY);if(r){var p=JSON.parse(r);ST=Object.assign(ST,p);if(!ST.byTopic)ST.byTopic={ps:[0,0],exp:[0,0],dd:[0,0]};}}catch(e){}}
+function saveST(){try{localStorage.setItem(KEY,JSON.stringify(ST));}catch(e){}}
+loadST();
+
+var combo=0, streak=0, count=0, current=null, answered=false;
+
+/* ===================== PROBLEM GENERATORS ===================== */
+function genPS(){
+  var v=pick(['lot','reverse','multi']);
+  if(v==='lot'){
+    var bal=pick([850,1200,2350,3400,5000,740]),risk=pick([1,1.5,2,0.75,1.25]);
+    var entry=round(2300+Math.random()*500,1),slD=pick([22,35,47,63,81,95]),dir=pick(['Buy','Sell']);
+    var sl=dir==='Buy'?round(entry-slD/10,1):round(entry+slD/10,1);
+    var ra=bal*risk/100,lot=ra/(slD*1);
+    return{topic:'ps',scenario:'ทอง '+dir+' setup จาก order block พอร์ตมี $'+bal+' ตั้ง risk '+risk+'% ต่อไม้ SL วางที่ '+sl+' (ห่าง entry '+slD+' pip)',
+      givens:'Balance = $'+bal+'\nRisk = '+risk+'%\nEntry = '+entry+'  |  SL = '+sl+'  ('+slD+' pip)',
+      ask:'เปิดกี่ lot?',unit:'lot',answer:round(lot,3),tol:0.005,
+      steps:['Risk amount = '+bal+' × '+(risk/100)+' = $'+round(ra,2),'Lot = Risk / (SL × $1) = '+round(ra,2)+' / '+slD,'= '+round(lot,3)+' lot','เช็คย้อน: '+round(lot,3)+' × '+slD+' × $1 = $'+round(lot*slD,2)+' ✓']};
+  }else if(v==='reverse'){
+    var mr=pick([18,25,33,42,56,70]),ls=pick([0.20,0.35,0.50,0.75,1.00,0.15]),msl=mr/(ls*1);
+    return{topic:'ps',scenario:'นายอยากเสี่ยงไม่เกิน $'+mr+' ต่อไม้ และตั้งใจเปิด '+ls+' lot ตาม conviction',
+      givens:'Max risk = $'+mr+'\nLot = '+ls+' lot\nPip value = $1 / 1.00 lot',
+      ask:'SL ห่างได้สูงสุดกี่ pip?',unit:'pip',answer:round(msl,1),tol:0.5,
+      steps:['Max SL = Risk / (Lot × Pip Value)','= '+mr+' / ('+ls+' × 1) = '+mr+' / '+ls,'= '+round(msl,1)+' pip','เช็คย้อน: '+ls+' × '+round(msl,1)+' × $1 = $'+round(ls*msl,2)+' ✓']};
+  }else{
+    var b=pick([1000,2000,3000,1500]),rk=pick([1,2,1.5]),s1=pick([30,40,50]),s2=s1+pick([20,30,40]);
+    var ra2=b*rk/100,la=ra2/s1,lb=ra2/s2,df=la-lb;
+    return{topic:'ps',scenario:'พอร์ต $'+b+' risk '+rk+'% เดิม SL '+s1+' pip แต่ตลาดผันผวน นายขยับ SL เป็น '+s2+' pip กัน stop hunt',
+      givens:'Balance = $'+b+'  |  Risk = '+rk+'%\nSL เดิม = '+s1+' pip → ใหม่ = '+s2+' pip',
+      ask:'lot ต้องลดลงกี่ lot?',unit:'lot',answer:round(df,3),tol:0.005,
+      steps:['Risk = '+b+' × '+(rk/100)+' = $'+ra2+' (คงที่)','Lot เดิม = '+ra2+' / '+s1+' = '+round(la,3),'Lot ใหม่ = '+ra2+' / '+s2+' = '+round(lb,3),'ลดลง = '+round(df,3)+' lot (SL กว้าง → lot เล็ก, risk เท่าเดิม)']};
+  }
+}
+function genEXP(){
+  var v=pick(['calc','rwin','rrr','net']);
+  if(v==='calc'){
+    var wr=pick([28,33,41,47,52,38]),aw=pick([45,60,75,90,110,135]),al=pick([20,25,30,35,40]);
+    var e=(wr/100)*aw-(1-wr/100)*al;
+    return{topic:'exp',scenario:'backtest ระบบ XAUUSD จาก 200 ไม้ได้ผลนี้ หา expectancy ดูว่าทำเงินจริงไหม',
+      givens:'Win rate = '+wr+'%\nAvg Win = $'+aw+'\nAvg Loss = $'+al,
+      ask:'Expectancy ต่อไม้? ($)',unit:'$/ไม้',answer:round(e,2),tol:0.05,
+      steps:['E = (Win% × AvgWin) − (Loss% × AvgLoss)','= ('+(wr/100)+' × '+aw+') − ('+round(1-wr/100,2)+' × '+al+')','= '+round((wr/100)*aw,2)+' − '+round((1-wr/100)*al,2)+' = '+round(e,2),(e>0?'บวก → ระบบทำเงิน ✓ · 200 ไม้ ≈ $'+round(e*200,0):'ลบ → ระบบเผาเงิน ✗')]};
+  }else if(v==='rwin'){
+    var aw2=pick([60,80,100,120]),al2=pick([25,30,40]),tE=pick([10,15,20,25]),rw=(tE+al2)/(aw2+al2)*100;
+    return{topic:'exp',scenario:'นายอยากให้ระบบมี expectancy +$'+tE+'/ไม้ รู้ Avg Win $'+aw2+' และ Avg Loss $'+al2,
+      givens:'Target E = +$'+tE+'/ไม้\nAvg Win = $'+aw2+'\nAvg Loss = $'+al2,
+      ask:'win rate ขั้นต่ำกี่ %?',unit:'%',answer:round(rw,1),tol:0.3,
+      steps:['ตั้งสมการ: '+tE+' = (W × '+aw2+') − ((1−W) × '+al2+')','กระจาย: '+tE+' = '+(aw2+al2)+'W − '+al2,'ย้ายข้าง: '+(tE+al2)+' = '+(aw2+al2)+'W','W = '+(tE+al2)+' / '+(aw2+al2)+' = '+round(rw,1)+'%']};
+  }else if(v==='rrr'){
+    var rr=pick([1.5,2,2.5,3,4,5]),be=1/(1+rr)*100;
+    return{topic:'exp',scenario:'setup ใหม่ใช้ Risk:Reward = 1 : '+rr+' อยากรู้ต้องชนะกี่ % ถึงไม่ขาดทุน',
+      givens:'RR = 1 : '+rr+'\n(เสีย 1 หน่วย, ได้ '+rr+' หน่วยต่อไม้ชนะ)',
+      ask:'Breakeven win rate? (%)',unit:'%',answer:round(be,1),tol:0.3,
+      steps:['Breakeven = 1 / (1 + RR)','= 1 / '+(1+rr)+' = '+round(be,1)+'%','เช็ค: ('+round(be/100,3)+' × '+rr+') − ('+round(1-be/100,3)+' × 1) ≈ 0 ✓']};
+  }else{
+    var wr3=pick([35,40,45,60,70]),aw3=pick([50,70,90]),al3=pick([30,50,80]),n=pick([50,100,150]);
+    var e3=(wr3/100)*aw3-(1-wr3/100)*al3,tot=e3*n;
+    return{topic:'exp',scenario:'ระบบ win rate '+wr3+'% Avg Win $'+aw3+' Avg Loss $'+al3+' เทรดครบ '+n+' ไม้ พอร์ตเปลี่ยนเท่าไหร่',
+      givens:'Win rate = '+wr3+'%  |  '+n+' ไม้\nAvg Win = $'+aw3+'  |  Avg Loss = $'+al3,
+      ask:'กำไร/ขาดทุนรวม? ($)',unit:'$',answer:round(tot,0),tol:Math.max(2,Math.abs(tot)*0.01),
+      steps:['E = ('+(wr3/100)+' × '+aw3+') − ('+round(1-wr3/100,2)+' × '+al3+') = '+round(e3,2)+'/ไม้','รวม = '+round(e3,2)+' × '+n,'= $'+round(tot,0)+(tot>0?' (พอร์ตโต ✓)':' (พอร์ตหด ✗)')]};
+  }
+}
+function genDD(){
+  var v=pick(['rec','ddp','comp','tgt']);
+  if(v==='rec'){
+    var dd=pick([15,22,28,35,44,50,60]),rec=(1/(1-dd/100)-1)*100;
+    return{topic:'dd',scenario:'พอร์ตเจอ losing streak จนติดลบจาก peak ไป '+dd+'% ต้องทำกำไรกลับเท่าไหร่ถึงเท่าทุนเดิม',
+      givens:'Drawdown = −'+dd+'% จาก peak\nเป้า: กลับไปทุนเดิม',
+      ask:'ต้องทำกำไรกี่ %?',unit:'%',answer:round(rec,1),tol:0.3,
+      steps:['Recovery = [ 1 / (1 − DD) ] − 1','= [ 1 / '+round(1-dd/100,2)+' ] − 1 = '+round(rec,1)+'%','$1000 → เหลือ $'+round(1000*(1-dd/100),0)+' → ต้อง +$'+round(1000*(rec/100)*(1-dd/100),0)+' (ฐานเล็กลง เด้งแรงกว่า)']};
+  }else if(v==='ddp'){
+    var pk=pick([1000,2500,5000,1800,3200]),lp=pick([12,18,24,31,28]),tr=round(pk*(1-lp/100),0),dc=(pk-tr)/pk*100;
+    return{topic:'dd',scenario:'พอร์ตเคยขึ้น peak ที่ $'+pk+' แล้วร่วงเหลือ $'+tr+' ในช่วง drawdown',
+      givens:'Peak = $'+pk+'\nTrough = $'+tr,
+      ask:'Drawdown กี่ %?',unit:'%',answer:round(dc,1),tol:0.3,
+      steps:['DD = (Peak − Trough) / Peak × 100','= ('+pk+' − '+tr+') / '+pk+' × 100','= '+(pk-tr)+' / '+pk+' × 100 = '+round(dc,1)+'%']};
+  }else if(v==='comp'){
+    var dl=pick([3,4,5]),dy=pick([5,7,8,10]),rm=Math.pow(1-dl/100,dy),tdd=(1-rm)*100;
+    return{topic:'dd',scenario:'circuit breaker ตั้ง max daily loss '+dl+'% แต่เจอช่วงโหด เสียเต็ม limit ติดกัน '+dy+' วัน',
+      givens:'Daily loss = '+dl+'%/วัน\n'+dy+' วันติด (compound)',
+      ask:'พอร์ตหดรวมกี่ %?',unit:'%',answer:round(tdd,1),tol:0.4,
+      steps:['แต่ละวันเหลือ '+round(1-dl/100,2)+' ของวันก่อน','หลัง '+dy+' วัน = '+round(1-dl/100,2)+'^'+dy+' = '+round(rm,4),'หดไป = (1 − '+round(rm,4)+') = '+round(tdd,1)+'%','สังเกต: '+dl+'×'+dy+' = '+(dl*dy)+'% แต่จริง '+round(tdd,1)+'% (compound ลง)']};
+  }else{
+    var sb=pick([1000,2000,5000]),ddt=pick([20,30,40]),tr2=round(sb*(1-ddt/100),0),rn=(1/(1-ddt/100)-1)*100,pn=sb-tr2;
+    return{topic:'dd',scenario:'พอร์ตเริ่ม $'+sb+' เจอ drawdown '+ddt+'% เหลือ $'+tr2+' ต้องทำกำไรเป็น "เงิน" เท่าไหร่ถึงกลับทุน',
+      givens:'ทุนเดิม = $'+sb+'\nDD = '+ddt+'% → เหลือ $'+tr2,
+      ask:'ต้องทำกำไรกี่ $?',unit:'$',answer:round(pn,0),tol:1,
+      steps:['กลับจาก $'+tr2+' ไป $'+sb,'กำไร = '+sb+' − '+tr2+' = $'+round(pn,0),'คิดเป็น % จากฐานใหม่ = +'+round(rn,1)+'%','asymmetry: เสีย '+ddt+'% ต้องเด้ง +'+round(rn,1)+'%']};
+  }
+}
+
+/* ===================== RENDER QUESTION ===================== */
+function nextQ(){
+  count++; answered=false;
+  current=pick([genPS,genEXP,genDD])();
+  var t=THEME[current.topic];
+  var badge=$('badge'); badge.className='badge '+t.badge;
+  $('badge-ic').innerHTML=t.ic; $('badge-tx').textContent=t.label;
+  $('accent').style.background=t.accent;
+  $('qnum').textContent='ข้อที่ '+count;
+  $('scenario').textContent=current.scenario;
+  $('givens').textContent=current.givens;
+  $('ask').textContent=current.ask;
+  $('unit').textContent=current.unit;
+  var a=$('answer'); a.value=''; a.style.borderColor=''; 
+  $('feedback').innerHTML='';
+  setTimeout(function(){a.focus();},50);
+}
+
+function buildSteps(){
+  var h='<div class="steps-lbl">วิธีคิดทีละ step</div><div class="steps">';
+  current.steps.forEach(function(s,i){h+='<span class="sn">'+(i+1)+'.</span> '+s+'<br>';});
+  return h+'</div>';
+}
+function showFB(html,cls){
+  $('feedback').innerHTML='<div class="fb '+cls+'">'+html+'</div>';
+}
+
+function recordResult(topic,ok){
+  ST.total++; if(ok)ST.correct++;
+  ST.byTopic[topic][0]++; if(ok)ST.byTopic[topic][1]++;
+  if(streak>ST.best)ST.best=streak;
+  ST.score=Math.max(ST.score, scoreRun);
+  saveST();
+}
+
+var scoreRun=0;
+function checkAns(){
+  if(answered){nextQ();return;}
+  var raw=$('answer').value.trim().replace(/[$,%\s]/g,'');
+  var val=parseFloat(raw),a=$('answer');
+  if(isNaN(val)){a.style.borderColor='var(--amber)';showFB('<div class="fb-title">ใส่ตัวเลขก่อนนะ</div>','fb-n');return;}
+  answered=true;
+  var ok=Math.abs(val-current.answer)<=current.tol;
+  if(ok){
+    combo++; streak++;
+    var pts=10*combo; scoreRun+=pts;
+    a.style.borderColor='var(--green)';
+    var bonus=combo>1?' <span class="bonus">(คอมโบ '+combo+'× → +'+pts+')</span>':' <span class="bonus">(+'+pts+')</span>';
+    showFB('<div class="fb-title">'+IC.ok+' ถูกต้อง! = '+current.answer+' '+current.unit+bonus+'</div>'+buildSteps(),'fb-ok');
+  }else{
+    a.style.borderColor='var(--red)';
+    showFB('<div class="fb-title">'+IC.no+' ยังไม่ใช่ — นายตอบ '+val+' แต่คำตอบคือ '+current.answer+' '+current.unit+'</div>'+buildSteps(),'fb-no');
+    combo=0; streak=0; scoreRun=Math.max(scoreRun, ST.score);
+  }
+  recordResult(current.topic,ok);
+  updateStatsBar(); renderPips();
+}
+function reveal(){
+  if(!answered){combo=0;streak=0;updateStatsBar();renderPips();}
+  answered=true;
+  showFB('<div class="fb-title">เฉลย: '+current.answer+' '+current.unit+'</div>'+buildSteps(),'fb-n');
+}
+
+function renderPips(){
+  var c=$('pips');c.innerHTML='';
+  for(var i=0;i<10;i++){var d=document.createElement('div');d.className='pip'+(i<streak?' on':'');c.appendChild(d);}
+  $('streak-lbl').textContent=streak>=10?'🎯 ครบ 10! ติดมือแล้ว':(Math.min(streak,10)+' / 10');
+}
+function updateStatsBar(){
+  $('tb-score').textContent=scoreRun;
+  $('tb-combo').textContent=combo+'×';
+}
+
+/* ===================== STATS VIEW ===================== */
+function renderStats(){
+  $('st-total').textContent=ST.total;
+  $('st-acc').textContent=(ST.total?Math.round(ST.correct/ST.total*100):0)+'%';
+  $('st-best').textContent=ST.best;
+  $('st-score').textContent=ST.score;
+  var map={ps:'ps',exp:'exp',dd:'dd'};
+  ['ps','exp','dd'].forEach(function(k){
+    var d=ST.byTopic[k],tot=d[0],cor=d[1],pc=tot?Math.round(cor/tot*100):0;
+    $('tp-'+k).textContent=tot?(cor+'/'+tot+' · '+pc+'%'):'ยังไม่ได้ฝึก';
+    $('tf-'+k).style.width=(tot?pc:0)+'%';
+  });
+}
+function resetStats(){
+  if(confirm('ล้างสถิติทั้งหมด? กู้คืนไม่ได้นะ')){
+    ST={total:0,correct:0,best:0,score:0,byTopic:{ps:[0,0],exp:[0,0],dd:[0,0]}};
+    scoreRun=0;combo=0;streak=0;saveST();renderStats();updateStatsBar();renderPips();
+  }
+}
+
+/* ===================== NAV ===================== */
+function go(v){
+  document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active');});
+  $('view-'+v).classList.add('active');
+  if(v==='stats')renderStats();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function startTrainer(){go('trainer');if(count===0)nextQ();else{renderPips();updateStatsBar();}}
+
+/* keyboard */
+document.addEventListener('keydown',function(e){
+  if($('view-trainer').classList.contains('active')){
+    if(e.key==='Enter'){e.preventDefault();checkAns();}
+  }
+});
+
+/* init */
+renderPips(); updateStatsBar();
+</script>
+</body>
+</html>
